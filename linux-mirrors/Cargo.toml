@@ -7,6 +7,14 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
+hyper = { version = "0.14", features = ["http2", "runtime", "client", "stream"] }
+hyper-openssl = "0.9"
+openssl = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["macros"] }
 
 [features]
 default = []
