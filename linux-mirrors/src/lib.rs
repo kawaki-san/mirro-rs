@@ -3,7 +3,7 @@ use openssl::ssl::{SslConnector, SslMethod};
 
 #[cfg(feature = "archlinux")]
 pub mod archlinux;
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+pub(crate) type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 fn http2_client() -> hyper::Client<hyper_openssl::HttpsConnector<HttpConnector>> {
     let builder = hyper::client::Client::builder();
