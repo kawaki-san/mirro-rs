@@ -64,7 +64,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .block(
                     Block::default()
                         .borders(Borders::ALL)
-                        .title(widget_title("country")),
+                        .title(widget_title("country filter")),
                 );
             rect.render_widget(input, chunks[1]);
             let help = Paragraph::new("Press").style(Style::default());
@@ -141,9 +141,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         }
     }
     {
-        let header_cells = ["Country:", "Mirrors:"]
-            .iter()
-            .map(|h| Cell::from(*h).style(Style::default().fg(Color::White)));
+        let header_cells = ["Country:", "Mirrors:"].iter().map(|h| {
+            Cell::from(*h).style(
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            )
+        });
         let header = Row::new(header_cells).height(1);
         let rows = app.mirrors.countries.iter().filter_map(|resp| {
             if resp
@@ -161,8 +165,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             None
         });
         let selected_style = Style::default()
-            .fg(Color::LightRed)
-            .bg(Color::White)
+            .fg(Color::Blue)
+            .add_modifier(Modifier::BOLD)
+            .bg(Color::DarkGray)
             .add_modifier(Modifier::REVERSED);
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -172,7 +177,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             .header(header)
             .block(
                 Block::default()
-                    .title(widget_title("mirrors"))
+                    .title(widget_title("available mirrors"))
                     .borders(Borders::ALL)
                     .border_style(Style::default()),
             )
@@ -184,8 +189,80 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Constraint::Min(10),
             ]);
         rect.render_stateful_widget(t, chunks[0], &mut app.table);
-    }
 
+        {
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
+                .split(chunks[1]);
+            let rows = app.selected_countries.iter().map(|resp| {
+                let mut item_name = resp.country.country.as_str();
+                if item_name.is_empty() {
+                    item_name = "misc"
+                }
+                let row = vec![item_name.to_owned()];
+                Row::new(row.into_iter())
+            });
+
+            let header_cells = ["Selected Countries:"].iter().map(|h| {
+                Cell::from(*h).style(
+                    Style::default()
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                )
+            });
+            let header = Row::new(header_cells).height(1);
+            let t = Table::new(rows)
+                .header(header)
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .border_style(Style::default()),
+                )
+                .highlight_symbol(" ")
+                .widths(&[
+                    Constraint::Percentage(50),
+                    Constraint::Length(30),
+                    Constraint::Min(10),
+                ]);
+            rect.render_stateful_widget(t, chunks[0], &mut app.selected_table);
+            /*
+            let rows = app.selected_countries.iter().map(|resp| {
+                let mut item_name = resp.country.as_str();
+                if item_name.is_empty() {
+                    item_name = "misc"
+                }
+                let row = vec![item_name.to_owned()];
+                Row::new(row.into_iter())
+            });
+
+            let header_cells = ["Mirror Preview:"]
+                .iter()
+                .map(|h| Cell::from(*h).style(Style::default().fg(Color::White)));
+            let header = Row::new(header_cells).height(1);
+            let t = Table::new(rows)
+                .header(header)
+                .block(Block::default().borders(Borders::ALL).border_style(
+                    match app.focused_widget {
+                        FocusedWidget::MirrorPreview => Style::default().fg(Color::Yellow),
+                        _ => Style::default(),
+                    },
+                ))
+                .highlight_style(selected_style)
+                .highlight_symbol(" ")
+                .widths(&[
+                    Constraint::Percentage(50),
+                    Constraint::Length(30),
+                    Constraint::Min(10),
+                ]);
+            rect.render_stateful_widget(
+                t,
+                chunks[1],
+                &mut app.selected_countries_state.lock().unwrap(),
+            );
+            */
+        }
+    }
     rect.render_widget(block_0, chunks[0]);
 }
 
@@ -225,7 +302,7 @@ fn widget_title(title: &str) -> Spans {
         ),
         Span::styled(
             title.get(1..title.len()).unwrap().to_string(),
-            Style::default(),
+            Style::default().add_modifier(Modifier::BOLD),
         ),
     ])
 }

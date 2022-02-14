@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use linux_mirrors::archlinux::internal::Url;
+
 #[derive(Clone)]
 pub enum AppState {
     Init,
@@ -99,4 +101,10 @@ impl Default for AppState {
     fn default() -> Self {
         Self::Init
     }
+}
+
+pub struct SelectedCountry {
+    pub country: Url,
+    pub search_item: String,
+    pub index: u8,
 }

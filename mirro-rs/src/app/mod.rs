@@ -7,7 +7,7 @@ use crate::{inputs::key::Key, io::IoEvent};
 
 use self::{
     actions::{Action, Actions},
-    state::{AppState, Widgets},
+    state::{AppState, SelectedCountry, Widgets},
 };
 
 pub mod actions;
@@ -31,6 +31,8 @@ pub struct App {
     country_filter: String,
     clock: DateTime<Utc>,
     table: TableState,
+    selected_countries: Vec<SelectedCountry>,
+    selected_table: TableState,
 }
 
 impl App {
@@ -48,6 +50,8 @@ impl App {
             country_filter: String::default(),
             clock: Utc::now(),
             table: TableState::default(),
+            selected_table: TableState::default(),
+            selected_countries: vec![],
         }
     }
 
@@ -171,12 +175,28 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                             app.country_filter.pop();
                         }
                         Key::Char(ch) => app.country_filter.push(ch),
-                        Key::Esc => {}
-                        _ => unreachable!(),
+                        _ => {}
                     },
                     Widgets::Protocols => todo!(),
                     Widgets::Mirrors => match key {
-                        Key::Enter | Key::Char(' ') => todo!(),
+                        Key::Enter | Key::Char(' ') => {
+                            if let Some(index) = app.table.selected() {
+                                if let Some(f) = app.mirrors.countries.get(index) {
+                                    let country = &f.country;
+                                    if !app
+                                        .selected_countries
+                                        .iter()
+                                        .any(|w| w.country.country.eq(country))
+                                    {
+                                        app.selected_countries.push(SelectedCountry {
+                                            country: f.to_owned(),
+                                            search_item: app.country_filter.clone(),
+                                            index: index.try_into().unwrap(),
+                                        });
+                                    }
+                                };
+                            };
+                        }
                         Key::Esc => todo!(),
                         Key::Up | Key::Char('k') => app.scroll_next(),
                         Key::Down | Key::Char('j') => app.scroll_prev(),
