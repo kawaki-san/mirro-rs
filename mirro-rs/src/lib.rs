@@ -1,6 +1,10 @@
 use std::{io::stdout, sync::Arc, time::Duration};
 
-use crossterm::terminal::{disable_raw_mode, enable_raw_mode};
+use crossterm::{
+    event::{DisableMouseCapture, EnableMouseCapture},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
 use tokio::sync::Mutex;
 use tui::{backend::CrosstermBackend, Terminal};
 
@@ -17,7 +21,8 @@ pub mod io;
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 pub async fn start_ui(app: Arc<Mutex<App>>) -> Result<()> {
-    let stdout = stdout();
+    let mut stdout = stdout();
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     enable_raw_mode()?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
@@ -37,7 +42,7 @@ pub async fn start_ui(app: Arc<Mutex<App>>) -> Result<()> {
     loop {
         let mut app = app.lock().await;
         // Render
-        terminal.draw(|rect| ui::draw(rect, &app))?;
+        terminal.draw(|rect| ui::draw(rect, &mut app))?;
 
         /*
          * Handle inputs
@@ -72,5 +77,10 @@ pub async fn start_ui(app: Arc<Mutex<App>>) -> Result<()> {
     terminal.clear()?;
     terminal.show_cursor()?;
     disable_raw_mode()?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     Ok(())
 }

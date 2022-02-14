@@ -1,8 +1,10 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use chrono::{DateTime, Utc};
 use linux_mirrors::archlinux::internal::ArchMirrors;
 use tokio::sync::mpsc::Receiver;
+use tracing::{debug, error, trace};
 
 use super::IoEvent;
 use crate::app::App;
@@ -29,37 +31,37 @@ impl IoAsyncHandler {
         };
 
         if let Err(err) = result {
-            eprintln!("Oops, something wrong happen: {:?}", err);
+            error!("{err}");
         }
 
         let mut app = self.app.lock().await;
         app.loaded();
     }
 
-    /// We use dummy implementation here, just wait 1s
+    /// Get your mirrors here
     async fn do_initialize(&mut self) -> Result<()> {
+        // get mirrors
         while let Some(mirrors) = &self.mirrors_receiver.recv().await {
             let mut app = self.app.lock().await;
-            app.update_mirrors(mirrors.clone());
+            app.update_mirrors(mirrors);
         }
-        println!("🚀 Initialize the application");
         let mut app = self.app.lock().await;
-        tokio::time::sleep(Duration::from_secs(1)).await;
         app.initialized(); // we could update the app state
-        println!("👍 Application initialized");
+        debug!("👍 Application initialized");
 
         Ok(())
     }
 
     /// Just take a little break
     async fn do_sleep(&mut self, duration: Duration) -> Result<()> {
-        println!("😴 Go sleeping for {:?}...", duration);
+        trace!("sleeping for {:?}...", duration);
+        let utc: DateTime<Utc> = Utc::now();
         tokio::time::sleep(duration).await;
-        println!("⏰ Wake up !");
+        trace!("waking up");
         // Notify the app for having slept
         let mut app = self.app.lock().await;
+        app.update_clock(utc);
         app.slept();
-
         Ok(())
     }
 }

@@ -7,6 +7,7 @@ use std::{
 };
 
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::error;
 
 use super::{key::Key, InputEvent};
 
@@ -33,12 +34,12 @@ impl Events {
                     if let crossterm::event::Event::Key(key) = crossterm::event::read().unwrap() {
                         let key = Key::from(key);
                         if let Err(err) = event_tx.send(InputEvent::Input(key)).await {
-                            eprintln!("Oops!, {}", err);
+                            error!("{err}");
                         }
                     }
                 }
                 if let Err(err) = event_tx.send(InputEvent::Tick).await {
-                    eprintln!("Oops!, {}", err);
+                    error!("Oops!, {}", err);
                 }
                 if event_stop_capture.load(Ordering::Relaxed) {
                     break;

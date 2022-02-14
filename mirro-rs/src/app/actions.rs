@@ -4,23 +4,25 @@ use std::slice::Iter;
 
 use crate::inputs::key::Key;
 
+use super::state::Widgets;
+
 /// We define all available action
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Action {
     Quit,
     Sleep,
-    IncrementDelay,
-    DecrementDelay,
+    Focus(Widgets),
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 4] = [
+        static ACTIONS: [Action; 5] = [
             Action::Quit,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::DecrementDelay,
+            Action::Focus(Widgets::CountryFilter),
+            Action::Focus(Widgets::Protocols),
+            Action::Focus(Widgets::Mirrors),
         ];
         ACTIONS.iter()
     }
@@ -30,8 +32,9 @@ impl Action {
         match self {
             Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
             Action::Sleep => &[Key::Char('s')],
-            Action::IncrementDelay => &[Key::Char('+')],
-            Action::DecrementDelay => &[Key::Char('-')],
+            Action::Focus(Widgets::CountryFilter) => &[Key::Char('c')],
+            Action::Focus(Widgets::Protocols) => &[Key::Char('p')],
+            Action::Focus(Widgets::Mirrors) => &[Key::Char('m')],
         }
     }
 }
@@ -42,8 +45,10 @@ impl Display for Action {
         let str = match self {
             Action::Quit => "Quit",
             Action::Sleep => "Sleep",
-            Action::IncrementDelay => "Increment delay",
-            Action::DecrementDelay => "Decrement delay",
+
+            Action::Focus(Widgets::CountryFilter) => "Focus Filter",
+            Action::Focus(Widgets::Protocols) => "Focus Protocols",
+            Action::Focus(Widgets::Mirrors) => "Focus Mirrors",
         };
         write!(f, "{}", str)
     }
@@ -131,8 +136,9 @@ mod tests {
         let _actions: Actions = vec![
             Action::Quit,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::DecrementDelay,
+            Action::Focus(Widgets::CountryFilter),
+            Action::Focus(Widgets::Protocols),
+            Action::Focus(Widgets::Mirrors),
         ]
         .into();
     }
@@ -142,12 +148,15 @@ mod tests {
     fn should_panic_when_create_actions_conflict_key() {
         let _actions: Actions = vec![
             Action::Quit,
-            Action::DecrementDelay,
             Action::Sleep,
-            Action::IncrementDelay,
-            Action::IncrementDelay,
+            Action::Sleep,
             Action::Quit,
-            Action::DecrementDelay,
+            Action::Focus(Widgets::CountryFilter),
+            Action::Focus(Widgets::Protocols),
+            Action::Focus(Widgets::Mirrors),
+            Action::Focus(Widgets::CountryFilter),
+            Action::Focus(Widgets::Protocols),
+            Action::Focus(Widgets::Mirrors),
         ]
         .into();
     }

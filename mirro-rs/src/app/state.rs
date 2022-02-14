@@ -7,7 +7,15 @@ pub enum AppState {
         duration: Duration,
         counter_sleep: u32,
         counter_tick: u64,
+        focused_widget: Widgets,
     },
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Widgets {
+    CountryFilter,
+    Protocols,
+    Mirrors,
 }
 
 impl AppState {
@@ -19,6 +27,7 @@ impl AppState {
             duration,
             counter_sleep,
             counter_tick,
+            focused_widget: Widgets::CountryFilter,
         }
     }
 
