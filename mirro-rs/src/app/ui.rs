@@ -55,11 +55,17 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     .as_ref(),
                 )
                 .split(chunks[0]);
-            let input = Paragraph::new("input").style(Style::default()).block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(widget_title("country")),
-            );
+            let input = Paragraph::new(app.country_filter.as_ref())
+                .style(if app.country_filter.is_empty() {
+                    Style::default()
+                } else {
+                    Style::default().fg(Color::Green)
+                })
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title(widget_title("country")),
+                );
             rect.render_widget(input, chunks[1]);
             let help = Paragraph::new("Press").style(Style::default());
             rect.render_widget(help, chunks[0]);
@@ -87,7 +93,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["mirro-rs: 0.1.0"]
                 .iter()
                 .map(|h| Cell::from(*h).style(Style::default()));
-            let header = Row::new(header_cells).height(1);
+            let header = Row::new(header_cells)
+                .height(1)
+                .style(Style::default().fg(Color::Red));
             let mut count = 0;
             app.mirrors.countries.iter().for_each(|f| {
                 count += f.mirrors.len();
@@ -97,20 +105,24 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let datetime_utc = datetime.with_timezone(&Utc);
 
             let rows = vec![
-                Row::new(vec![table_field("os"), os]),
+                Row::new(vec![table_field("os"), os]).style(Style::default().fg(Color::Blue)),
                 Row::new(vec![
                     table_field("countries"),
                     app.mirrors.countries.len().to_string(),
-                ]),
-                Row::new(vec![table_field("mirrors"), count.to_string()]),
+                ])
+                .style(Style::default().fg(Color::Yellow)),
+                Row::new(vec![table_field("mirrors"), count.to_string()])
+                    .style(Style::default().fg(Color::Magenta)),
                 Row::new(vec![
                     table_field("last checked"),
                     datetime_utc.format("%d %h %H:%M").to_string(),
-                ]),
+                ])
+                .style(Style::default().fg(Color::Green)),
                 Row::new(vec![
                     table_field("now"),
                     app.clock.format("%d %h %H:%M:%S").to_string(),
-                ]),
+                ])
+                .style(Style::default().fg(Color::Cyan)),
             ];
             let t = Table::new(rows)
                 .header(header)

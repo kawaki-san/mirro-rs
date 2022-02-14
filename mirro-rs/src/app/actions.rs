@@ -12,17 +12,19 @@ pub enum Action {
     Quit,
     Sleep,
     Focus(Widgets),
+    Action,
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 5] = [
+        static ACTIONS: [Action; 6] = [
             Action::Quit,
             Action::Sleep,
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Action,
         ];
         ACTIONS.iter()
     }
@@ -30,11 +32,45 @@ impl Action {
     /// List of key associated to action
     pub fn keys(&self) -> &[Key] {
         match self {
-            Action::Quit => &[Key::Ctrl('c'), Key::Char('q')],
-            Action::Sleep => &[Key::Char('s')],
-            Action::Focus(Widgets::CountryFilter) => &[Key::Char('c')],
-            Action::Focus(Widgets::Protocols) => &[Key::Char('p')],
-            Action::Focus(Widgets::Mirrors) => &[Key::Char('m')],
+            Action::Quit => &[Key::Ctrl('c')],
+            Action::Sleep => &[Key::Ctrl('s')],
+            Action::Focus(Widgets::CountryFilter) => &[Key::Ctrl('f')],
+            Action::Focus(Widgets::Protocols) => &[Key::Ctrl('p')],
+            Action::Focus(Widgets::Mirrors) => &[Key::Ctrl('a')],
+            Action::Action => &[
+                Key::Char('a'),
+                Key::Char('b'),
+                Key::Char('c'),
+                Key::Char('d'),
+                Key::Char('e'),
+                Key::Char('f'),
+                Key::Char('g'),
+                Key::Char('h'),
+                Key::Char('i'),
+                Key::Char('j'),
+                Key::Char('k'),
+                Key::Char('l'),
+                Key::Char('m'),
+                Key::Char('n'),
+                Key::Char('o'),
+                Key::Char('p'),
+                Key::Char('q'),
+                Key::Char('r'),
+                Key::Char('s'),
+                Key::Char('t'),
+                Key::Char('u'),
+                Key::Char('v'),
+                Key::Char('w'),
+                Key::Char('x'),
+                Key::Char('y'),
+                Key::Char('z'),
+                Key::Char(' '),
+                Key::Up,
+                Key::Enter,
+                Key::Down,
+                Key::Backspace,
+                Key::Esc,
+            ],
         }
     }
 }
@@ -49,6 +85,7 @@ impl Display for Action {
             Action::Focus(Widgets::CountryFilter) => "Focus Filter",
             Action::Focus(Widgets::Protocols) => "Focus Protocols",
             Action::Focus(Widgets::Mirrors) => "Focus Mirrors",
+            Action::Action => "Action",
         };
         write!(f, "{}", str)
     }
@@ -64,12 +101,6 @@ impl Actions {
         Action::iterator()
             .filter(|action| self.0.contains(action))
             .find(|action| action.keys().contains(&key))
-    }
-
-    /// Get contextual actions.
-    /// (just for building a help view)
-    pub fn actions(&self) -> &[Action] {
-        self.0.as_slice()
     }
 }
 

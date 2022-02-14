@@ -70,6 +70,29 @@ impl AppState {
             None
         }
     }
+    pub fn focused_widget(&self) -> Option<&Widgets> {
+        match &self {
+            AppState::Init => None,
+            AppState::Initialized {
+                duration: _,
+                counter_sleep: _,
+                counter_tick: _,
+                focused_widget,
+            } => Some(focused_widget),
+        }
+    }
+
+    pub fn update_focused_widget(&mut self, widget: Widgets) {
+        let duration = Duration::from_secs(1);
+        let counter_sleep = 0;
+        let counter_tick = 0;
+        *self = Self::Initialized {
+            duration,
+            counter_sleep,
+            counter_tick,
+            focused_widget: widget,
+        }
+    }
 }
 
 impl Default for AppState {

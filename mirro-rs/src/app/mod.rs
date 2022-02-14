@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use linux_mirrors::archlinux::internal::ArchMirrors;
+use tracing::{error, trace};
 use tui::widgets::TableState;
 
 use crate::{inputs::key::Key, io::IoEvent};
@@ -52,30 +53,8 @@ impl App {
 
     pub async fn do_action(&mut self, key: Key) -> AppReturn {
         if let Some(action) = self.actions.find(key) {
-            match action {
-                Action::Quit => AppReturn::Exit,
-                Action::Sleep => {
-                    if let Some(duration) = self.state.duration().cloned() {
-                        // Sleep is an I/O action, we dispatch on the IO channel that's run on another thread
-                        self.dispatch(IoEvent::Sleep(duration)).await
-                    }
-                    AppReturn::Continue
-                }
-                Action::Focus(widget) => match widget {
-                    Widgets::CountryFilter => {
-                        println!("country widget focused");
-                        AppReturn::Continue
-                    }
-                    Widgets::Protocols => {
-                        println!("protocols widget focused");
-                        AppReturn::Continue
-                    }
-                    Widgets::Mirrors => {
-                        println!("mirrors widget focused");
-                        AppReturn::Continue
-                    }
-                },
-            }
+            trace!("Using action {}", &action);
+            key_handler(*action, self, key).await
         } else {
             // No action associated with key
             AppReturn::Continue
@@ -93,7 +72,7 @@ impl App {
         self.is_loading = true;
         if let Err(e) = self.io_tx.send(action).await {
             self.is_loading = false;
-            eprintln!("Error from dispatch {}", e);
+            error!("Error from dispatch {}", e);
         };
     }
 
@@ -105,6 +84,7 @@ impl App {
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Action,
         ]
         .into();
         self.state = AppState::initialized()
@@ -124,5 +104,91 @@ impl App {
 
     pub fn update_mirrors(&mut self, mirrors: &ArchMirrors) {
         self.mirrors = mirrors.clone();
+    }
+
+    pub fn scroll_next(&mut self) {
+        let state = &mut self.table;
+        let i = match state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    self.mirrors.countries.len() - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        state.select(Some(i));
+    }
+    pub fn scroll_prev(&mut self) {
+        let state = &mut self.table;
+        let i = match state.selected() {
+            Some(i) => {
+                if i >= self.mirrors.countries.len() - 1 {
+                    0
+                } else {
+                    i + 1
+                }
+            }
+            None => 0,
+        };
+        state.select(Some(i));
+    }
+}
+
+async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
+    if let Some(focused_widget) = app.state.focused_widget() {
+        match action {
+            Action::Quit => AppReturn::Exit,
+            Action::Sleep => {
+                if let Some(duration) = app.state.duration().cloned() {
+                    // Sleep is an I/O action, we dispatch on the IO channel that's run on another thread
+                    app.dispatch(IoEvent::Sleep(duration)).await
+                }
+                AppReturn::Continue
+            }
+            Action::Focus(widget) => match widget {
+                Widgets::CountryFilter => {
+                    trace!("country widget focused");
+                    app.state.update_focused_widget(Widgets::CountryFilter);
+                    AppReturn::Continue
+                }
+                Widgets::Protocols => {
+                    trace!("protocols widget focused");
+                    app.state.update_focused_widget(Widgets::Protocols);
+                    AppReturn::Continue
+                }
+                Widgets::Mirrors => {
+                    trace!("mirrors widget focused");
+                    app.state.update_focused_widget(Widgets::Mirrors);
+                    AppReturn::Continue
+                }
+            },
+            Action::Action => {
+                match focused_widget {
+                    Widgets::CountryFilter => match key {
+                        Key::Backspace => {
+                            app.country_filter.pop();
+                        }
+                        Key::Char(ch) => app.country_filter.push(ch),
+                        Key::Esc => {}
+                        _ => unreachable!(),
+                    },
+                    Widgets::Protocols => todo!(),
+                    Widgets::Mirrors => match key {
+                        Key::Enter | Key::Char(' ') => todo!(),
+                        Key::Esc => todo!(),
+                        Key::Up | Key::Char('k') => app.scroll_next(),
+                        Key::Down | Key::Char('j') => app.scroll_prev(),
+                        _ => {
+                            todo!()
+                        }
+                    },
+                }
+                AppReturn::Continue
+            }
+        }
+    } else {
+        AppReturn::Continue
     }
 }
