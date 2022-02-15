@@ -243,6 +243,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .border_style(Style::default()),
                 )
                 .highlight_symbol(" ")
+                .highlight_style(selected_style)
                 .widths(&[
                     Constraint::Percentage(50),
                     Constraint::Length(30),
@@ -281,7 +282,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     Constraint::Length(30),
                     Constraint::Min(10),
                 ]);
-            rect.render_stateful_widget(t, chunks[1], &mut app.selected_table);
+            rect.render_widget(t, chunks[1]);
         }
     }
     rect.render_widget(block_0, chunks[0]);
