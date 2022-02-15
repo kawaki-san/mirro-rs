@@ -4,12 +4,13 @@ use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Span, Spans, Text},
     widgets::{Block, Borders, Cell, Paragraph, Row, Table},
     Frame,
 };
+use unicode_width::UnicodeWidthStr;
 
-use super::App;
+use super::{state::Widgets, App};
 
 pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
     let size = rect.size();
@@ -62,28 +63,42 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     .as_ref(),
                 )
                 .split(chunks[0]);
-            let input = Paragraph::new(app.country_filter.as_ref())
-                .style(if app.country_filter.is_empty() {
-                    Style::default()
-                } else {
-                    Style::default().fg(Color::Green)
-                })
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(Spans::from(vec![
-                            Span::styled(
-                                "f".to_string(),
-                                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                            ),
-                            Span::styled(
-                                "ilter".to_string(),
-                                Style::default().add_modifier(Modifier::BOLD),
-                            ),
-                        ])),
-                );
+            let input = Paragraph::new(app.country_filter.as_ref()).block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title(Spans::from(vec![
+                        Span::styled(
+                            "f".to_string(),
+                            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                        ),
+                        Span::styled(
+                            "ilter".to_string(),
+                            Style::default().add_modifier(Modifier::BOLD),
+                        ),
+                    ])),
+            );
             rect.render_widget(input, chunks[1]);
-            let help = Paragraph::new("Press").style(Style::default());
+            if let Some(widget) = app.state.focused_widget() {
+                if widget == &Widgets::CountryFilter {
+                    rect.set_cursor(
+                        // Put cursor past the end of the input text
+                        chunks[1].x + app.country_filter.width() as u16 + 1,
+                        // Move one line down, from the border to the input line
+                        chunks[1].y + 1,
+                    );
+                }
+            }
+            let help = vec![
+                Span::raw("Press "),
+                Span::styled("<ctrl+[", Style::default().add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    "key",
+                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Red),
+                ),
+                Span::styled("]>", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to call a widget to focus"),
+            ];
+            let help = Paragraph::new(Text::from(Spans::from(help)));
             rect.render_widget(help, chunks[0]);
         }
         {

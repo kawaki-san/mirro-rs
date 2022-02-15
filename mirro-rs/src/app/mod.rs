@@ -214,8 +214,19 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                     Widgets::CountryFilter => match key {
                         Key::Backspace => {
                             app.country_filter.pop();
+                            if app.table.selected().is_some() {
+                                app.table.select(None);
+                            }
                         }
-                        Key::Char(ch) => app.country_filter.push(ch),
+                        Key::Char(ch) => {
+                            app.country_filter.push(ch);
+                            if app.table.selected().is_some() {
+                                app.table.select(None);
+                            }
+                        }
+                        Key::Ctrl('a') => {
+                            app.state.update_focused_widget(Widgets::Mirrors);
+                        }
                         _ => {}
                     },
                     Widgets::Protocols => todo!(),
