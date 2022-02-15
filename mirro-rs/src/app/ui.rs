@@ -243,7 +243,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .border_style(Style::default()),
                 )
                 .highlight_symbol(" ")
-                .highlight_style(selected_style)
+                .highlight_style(selected_style.patch(Style::default().fg(Color::Yellow)))
                 .widths(&[
                     Constraint::Percentage(50),
                     Constraint::Length(30),
@@ -271,12 +271,10 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .header(header)
                 .block(
                     Block::default()
-                        .title(widget_title("mirrors"))
+                        .title("mirrors")
                         .borders(Borders::ALL)
                         .border_style(Style::default()),
                 )
-                .highlight_style(selected_style)
-                .highlight_symbol(" ")
                 .widths(&[
                     Constraint::Percentage(50),
                     Constraint::Length(30),

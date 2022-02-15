@@ -202,7 +202,17 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                     Widgets::Mirrors => match key {
                         Key::Enter | Key::Char(' ') => {
                             if let Some(index) = app.table.selected() {
-                                if let Some(f) = app.mirrors.countries.get(index) {
+                                let inner_list: Vec<_> = app
+                                    .mirrors
+                                    .countries
+                                    .iter()
+                                    .filter(|f| {
+                                        f.country
+                                            .to_lowercase()
+                                            .contains(&app.country_filter.to_lowercase())
+                                    })
+                                    .collect();
+                                if let Some(f) = inner_list.get(index) {
                                     let country = &f.country;
                                     if !app
                                         .selected_countries
@@ -210,12 +220,13 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                                         .any(|w| w.country.country.eq(country))
                                     {
                                         app.selected_countries.push(SelectedCountry {
-                                            country: f.to_owned(),
+                                            country: (*f).clone(),
                                             search_item: app.country_filter.clone(),
                                             index: index.try_into().unwrap(),
                                         });
                                     }
                                 };
+                                app.table.select(None);
                             };
                         }
                         Key::Esc => todo!(),
@@ -225,7 +236,16 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                     },
                     Widgets::SelectedCountries => match key {
                         Key::Enter | Key::Char(' ') => {
-                            todo!()
+                            if let Some(index) = app.selected_table.selected() {
+                                if !app.selected_countries.is_empty() {
+                                    app.selected_countries.remove(index);
+                                    if !app.selected_countries.is_empty() {
+                                        app.selected_table.select(Some(index));
+                                    } else {
+                                        app.selected_table.select(None)
+                                    }
+                                }
+                            };
                         }
                         Key::Esc => todo!(),
                         Key::Up | Key::Char('k') => app.scroll_next(ScrollableTables::SavedMirrors),
