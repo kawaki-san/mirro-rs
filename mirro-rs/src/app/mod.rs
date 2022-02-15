@@ -155,7 +155,9 @@ impl App {
         match table {
             ScrollableTables::AllMirrors => {}
             ScrollableTables::SavedMirrors => {
-                self.focused_country = self.selected_countries.get(index).unwrap().country.clone();
+                if let Some(country) = self.selected_countries.get(index) {
+                    self.focused_country = country.country.clone()
+                }
             }
         }
     }

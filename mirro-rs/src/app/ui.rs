@@ -28,7 +28,14 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         .split(rect.size());
     let block_0 = Block::default()
         .borders(Borders::ALL)
-        .title(Spans::from(section_title(crate_name!())));
+        .title(Spans::from(section_title(format!(
+            "{} - {}",
+            crate_name!(),
+            match app.state.focused_widget() {
+                Some(w) => w.to_string(),
+                None => String::default(),
+            }
+        ))));
     {
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
@@ -126,7 +133,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     table_field("last checked"),
                     datetime_utc.format("%d %h %H:%M").to_string(),
                 ])
-                .style(Style::default().fg(Color::Green)),
+                .style(Style::default()),
                 Row::new(vec![
                     table_field("now"),
                     app.clock.format("%d %h %H:%M:%S").to_string(),
@@ -294,9 +301,9 @@ fn get_os_name() -> String {
     os.get(1).unwrap().to_string()
 }
 
-fn section_title(title: &str) -> Vec<Span> {
+fn section_title(title: impl AsRef<str>) -> Vec<Span<'static>> {
     vec![Span::styled(
-        format!(" {} ", title),
+        format!(" {} ", title.as_ref()),
         Style::default().add_modifier(Modifier::REVERSED),
     )]
 }

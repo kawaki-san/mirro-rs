@@ -21,6 +21,18 @@ pub enum Widgets {
     SelectedCountries,
 }
 
+impl ToString for Widgets {
+    fn to_string(&self) -> String {
+        match &self {
+            Widgets::CountryFilter => "filter",
+            Widgets::Protocols => "protocols",
+            Widgets::Mirrors => "mirrorlist",
+            Widgets::SelectedCountries => "marked mirrors",
+        }
+        .to_owned()
+    }
+}
+
 impl AppState {
     pub fn initialized() -> Self {
         let duration = Duration::from_secs(1);
