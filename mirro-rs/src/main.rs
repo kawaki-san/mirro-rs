@@ -1,5 +1,6 @@
+use chrono::Utc;
 use mirro_rs::{app::App, io::handler::IoAsyncHandler, start_ui};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use tracing::error;
 
@@ -14,6 +15,7 @@ async fn main() -> mirro_rs::Result<()> {
     // Since application state can be accessed and mutated across threads
     let app = Arc::new(Mutex::new(App::new(sync_io_tx.clone())));
     let app_ui = Arc::clone(&app);
+    let app_clock = Arc::clone(&app);
 
     // New thread to process @IoEvent. The @IoEvent processing loop delegates to the @IoAsyncHandler
     tokio::spawn(async move {
@@ -32,6 +34,14 @@ async fn main() -> mirro_rs::Result<()> {
             }
         };
         mirrors_tx.send(mirrors).await
+    });
+    tokio::spawn(async move {
+        loop {
+            let mut app = app_clock.lock().await;
+            let dt = Utc::now();
+            app.update_clock(dt);
+            tokio::time::sleep(Duration::from_micros(100)).await;
+        }
     });
 
     start_ui(app_ui).await?;

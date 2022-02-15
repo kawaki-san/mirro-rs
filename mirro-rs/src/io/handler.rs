@@ -56,11 +56,9 @@ impl IoAsyncHandler {
     async fn do_sleep(&mut self, duration: Duration) -> Result<()> {
         trace!("sleeping for {:?}...", duration);
         let utc: DateTime<Utc> = Utc::now();
-        tokio::time::sleep(duration).await;
         trace!("waking up");
         // Notify the app for having slept
         let mut app = self.app.lock().await;
-        app.update_clock(utc);
         app.slept();
         Ok(())
     }
