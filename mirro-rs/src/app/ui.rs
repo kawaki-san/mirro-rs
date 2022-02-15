@@ -64,7 +64,16 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .block(
                     Block::default()
                         .borders(Borders::ALL)
-                        .title(widget_title("country filter")),
+                        .title(Spans::from(vec![
+                            Span::styled(
+                                "f".to_string(),
+                                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                            ),
+                            Span::styled(
+                                "ilter".to_string(),
+                                Style::default().add_modifier(Modifier::BOLD),
+                            ),
+                        ])),
                 );
             rect.render_widget(input, chunks[1]);
             let help = Paragraph::new("Press").style(Style::default());
@@ -193,7 +202,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(70), Constraint::Percentage(30)].as_ref())
+                .constraints([Constraint::Percentage(65), Constraint::Percentage(35)].as_ref())
                 .split(chunks[1]);
             let rows = app.selected_countries.iter().map(|resp| {
                 let mut item_name = resp.country.country.as_str();
@@ -204,7 +213,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(row.into_iter())
             });
 
-            let header_cells = ["Selected Countries:"].iter().map(|h| {
+            let header_cells = ["marked for saving:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
                         .fg(Color::White)
@@ -216,6 +225,20 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .header(header)
                 .block(
                     Block::default()
+                        .title(Spans::from(vec![
+                            Span::styled(
+                                "c".to_string(),
+                                Style::default().add_modifier(Modifier::BOLD),
+                            ),
+                            Span::styled(
+                                "o".to_string(),
+                                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                            ),
+                            Span::styled(
+                                "untries".to_string(),
+                                Style::default().add_modifier(Modifier::BOLD),
+                            ),
+                        ]))
                         .borders(Borders::ALL)
                         .border_style(Style::default()),
                 )
@@ -226,9 +249,8 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     Constraint::Min(10),
                 ]);
             rect.render_stateful_widget(t, chunks[0], &mut app.selected_table);
-            /*
             let rows = app.selected_countries.iter().map(|resp| {
-                let mut item_name = resp.country.as_str();
+                let mut item_name = resp.country.country.as_str();
                 if item_name.is_empty() {
                     item_name = "misc"
                 }
@@ -236,18 +258,22 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(row.into_iter())
             });
 
-            let header_cells = ["Mirror Preview:"]
-                .iter()
-                .map(|h| Cell::from(*h).style(Style::default().fg(Color::White)));
+            let header_cells = ["per country:"].iter().map(|h| {
+                Cell::from(*h).style(
+                    Style::default()
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                )
+            });
             let header = Row::new(header_cells).height(1);
             let t = Table::new(rows)
                 .header(header)
-                .block(Block::default().borders(Borders::ALL).border_style(
-                    match app.focused_widget {
-                        FocusedWidget::MirrorPreview => Style::default().fg(Color::Yellow),
-                        _ => Style::default(),
-                    },
-                ))
+                .block(
+                    Block::default()
+                        .title(widget_title("mirrors"))
+                        .borders(Borders::ALL)
+                        .border_style(Style::default()),
+                )
                 .highlight_style(selected_style)
                 .highlight_symbol(" ")
                 .widths(&[
@@ -255,12 +281,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     Constraint::Length(30),
                     Constraint::Min(10),
                 ]);
-            rect.render_stateful_widget(
-                t,
-                chunks[1],
-                &mut app.selected_countries_state.lock().unwrap(),
-            );
-            */
+            rect.render_stateful_widget(t, chunks[1], &mut app.selected_table);
         }
     }
     rect.render_widget(block_0, chunks[0]);

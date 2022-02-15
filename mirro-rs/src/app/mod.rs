@@ -20,6 +20,11 @@ pub enum AppReturn {
     Continue,
 }
 
+enum ScrollableTables {
+    AllMirrors,
+    SavedMirrors,
+}
+
 /// The main application, containing the state
 pub struct App {
     is_loading: bool,
@@ -88,6 +93,7 @@ impl App {
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Focus(Widgets::SelectedCountries),
             Action::Action,
         ]
         .into();
@@ -110,25 +116,11 @@ impl App {
         self.mirrors = mirrors.clone();
     }
 
-    pub fn scroll_next(&mut self) {
-        let state = &mut self.table;
+    fn scroll_prev(&mut self, table: ScrollableTables) {
+        let (state, items) = self.table_info(table);
         let i = match state.selected() {
             Some(i) => {
-                if i == 0 {
-                    self.mirrors.countries.len() - 1
-                } else {
-                    i - 1
-                }
-            }
-            None => 0,
-        };
-        state.select(Some(i));
-    }
-    pub fn scroll_prev(&mut self) {
-        let state = &mut self.table;
-        let i = match state.selected() {
-            Some(i) => {
-                if i >= self.mirrors.countries.len() - 1 {
+                if i >= items - 1 {
                     0
                 } else {
                     i + 1
@@ -137,6 +129,30 @@ impl App {
             None => 0,
         };
         state.select(Some(i));
+    }
+
+    fn scroll_next(&mut self, table: ScrollableTables) {
+        let (state, items) = self.table_info(table);
+        let i = match state.selected() {
+            Some(i) => {
+                if i == 0 {
+                    items - 1
+                } else {
+                    i - 1
+                }
+            }
+            None => 0,
+        };
+        state.select(Some(i));
+    }
+
+    fn table_info(&mut self, table: ScrollableTables) -> (&mut TableState, usize) {
+        match table {
+            ScrollableTables::AllMirrors => (&mut self.table, self.mirrors.countries.len()),
+            ScrollableTables::SavedMirrors => {
+                (&mut self.selected_table, self.selected_countries.len())
+            }
+        }
     }
 }
 
@@ -165,6 +181,11 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                 Widgets::Mirrors => {
                     trace!("mirrors widget focused");
                     app.state.update_focused_widget(Widgets::Mirrors);
+                    AppReturn::Continue
+                }
+                Widgets::SelectedCountries => {
+                    trace!("selected countries widget focused");
+                    app.state.update_focused_widget(Widgets::SelectedCountries);
                     AppReturn::Continue
                 }
             },
@@ -198,11 +219,20 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                             };
                         }
                         Key::Esc => todo!(),
-                        Key::Up | Key::Char('k') => app.scroll_next(),
-                        Key::Down | Key::Char('j') => app.scroll_prev(),
-                        _ => {
+                        Key::Up | Key::Char('k') => app.scroll_next(ScrollableTables::AllMirrors),
+                        Key::Down | Key::Char('j') => app.scroll_prev(ScrollableTables::AllMirrors),
+                        _ => {}
+                    },
+                    Widgets::SelectedCountries => match key {
+                        Key::Enter | Key::Char(' ') => {
                             todo!()
                         }
+                        Key::Esc => todo!(),
+                        Key::Up | Key::Char('k') => app.scroll_next(ScrollableTables::SavedMirrors),
+                        Key::Down | Key::Char('j') => {
+                            app.scroll_prev(ScrollableTables::SavedMirrors)
+                        }
+                        _ => {}
                     },
                 }
                 AppReturn::Continue

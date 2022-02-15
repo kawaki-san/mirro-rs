@@ -18,12 +18,13 @@ pub enum Action {
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 6] = [
+        static ACTIONS: [Action; 7] = [
             Action::Quit,
             Action::Sleep,
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Focus(Widgets::SelectedCountries),
             Action::Action,
         ];
         ACTIONS.iter()
@@ -33,10 +34,11 @@ impl Action {
     pub fn keys(&self) -> &[Key] {
         match self {
             Action::Quit => &[Key::Ctrl('c')],
-            Action::Sleep => &[Key::Ctrl('s')],
+            Action::Sleep => &[Key::Ctrl('l')],
             Action::Focus(Widgets::CountryFilter) => &[Key::Ctrl('f')],
             Action::Focus(Widgets::Protocols) => &[Key::Ctrl('p')],
             Action::Focus(Widgets::Mirrors) => &[Key::Ctrl('a')],
+            Action::Focus(Widgets::SelectedCountries) => &[Key::Ctrl('o')],
             Action::Action => &[
                 Key::Char('a'),
                 Key::Char('b'),
@@ -85,6 +87,7 @@ impl Display for Action {
             Action::Focus(Widgets::CountryFilter) => "Focus Filter",
             Action::Focus(Widgets::Protocols) => "Focus Protocols",
             Action::Focus(Widgets::Mirrors) => "Focus Mirrors",
+            Action::Focus(Widgets::SelectedCountries) => "Selected Mirrors",
             Action::Action => "Action",
         };
         write!(f, "{}", str)
@@ -170,6 +173,7 @@ mod tests {
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Focus(Widgets::SelectedCountries),
         ]
         .into();
     }
@@ -188,6 +192,7 @@ mod tests {
             Action::Focus(Widgets::CountryFilter),
             Action::Focus(Widgets::Protocols),
             Action::Focus(Widgets::Mirrors),
+            Action::Focus(Widgets::SelectedCountries),
         ]
         .into();
     }

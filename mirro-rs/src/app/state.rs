@@ -18,6 +18,7 @@ pub enum Widgets {
     CountryFilter,
     Protocols,
     Mirrors,
+    SelectedCountries,
 }
 
 impl AppState {
