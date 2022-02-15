@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use linux_mirrors::archlinux::internal::ArchMirrors;
+use linux_mirrors::archlinux::internal::{ArchMirrors, Url};
 use tracing::{error, trace};
 use tui::widgets::TableState;
 
@@ -20,6 +20,7 @@ pub enum AppReturn {
     Continue,
 }
 
+#[derive(Clone, Copy, Debug)]
 enum ScrollableTables {
     AllMirrors,
     SavedMirrors,
@@ -38,6 +39,7 @@ pub struct App {
     table: TableState,
     selected_countries: Vec<SelectedCountry>,
     selected_table: TableState,
+    focused_country: Url,
 }
 
 impl App {
@@ -57,6 +59,7 @@ impl App {
             table: TableState::default(),
             selected_table: TableState::default(),
             selected_countries: vec![],
+            focused_country: Url::default(),
         }
     }
 
@@ -129,6 +132,7 @@ impl App {
             None => 0,
         };
         state.select(Some(i));
+        self.update_mirrors_widget(table, i);
     }
 
     fn scroll_next(&mut self, table: ScrollableTables) {
@@ -144,6 +148,16 @@ impl App {
             None => 0,
         };
         state.select(Some(i));
+        self.update_mirrors_widget(table, i);
+    }
+
+    fn update_mirrors_widget(&mut self, table: ScrollableTables, index: usize) {
+        match table {
+            ScrollableTables::AllMirrors => {}
+            ScrollableTables::SavedMirrors => {
+                self.focused_country = self.selected_countries.get(index).unwrap().country.clone();
+            }
+        }
     }
 
     fn table_info(&mut self, table: ScrollableTables) -> (&mut TableState, usize) {
@@ -153,6 +167,10 @@ impl App {
                 (&mut self.selected_table, self.selected_countries.len())
             }
         }
+    }
+
+    pub fn focused_country(&self) -> &Url {
+        &self.focused_country
     }
 }
 
@@ -226,10 +244,8 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                                         });
                                     }
                                 };
-                                app.table.select(None);
                             };
                         }
-                        Key::Esc => todo!(),
                         Key::Up | Key::Char('k') => app.scroll_next(ScrollableTables::AllMirrors),
                         Key::Down | Key::Char('j') => app.scroll_prev(ScrollableTables::AllMirrors),
                         _ => {}
@@ -247,10 +263,9 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                                 }
                             };
                         }
-                        Key::Esc => todo!(),
                         Key::Up | Key::Char('k') => app.scroll_next(ScrollableTables::SavedMirrors),
                         Key::Down | Key::Char('j') => {
-                            app.scroll_prev(ScrollableTables::SavedMirrors)
+                            app.scroll_prev(ScrollableTables::SavedMirrors);
                         }
                         _ => {}
                     },

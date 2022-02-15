@@ -245,13 +245,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .highlight_symbol(" ")
                 .highlight_style(selected_style.patch(Style::default().fg(Color::Yellow)))
                 .widths(&[
-                    Constraint::Percentage(50),
+                    Constraint::Percentage(80),
                     Constraint::Length(30),
                     Constraint::Min(10),
                 ]);
             rect.render_stateful_widget(t, chunks[0], &mut app.selected_table);
-            let rows = app.selected_countries.iter().map(|resp| {
-                let mut item_name = resp.country.country.as_str();
+            let rows = app.focused_country().mirrors.iter().map(|resp| {
+                let mut item_name = resp.url.as_str();
                 if item_name.is_empty() {
                     item_name = "misc"
                 }
@@ -276,7 +276,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .border_style(Style::default()),
                 )
                 .widths(&[
-                    Constraint::Percentage(50),
+                    Constraint::Percentage(80),
                     Constraint::Length(30),
                     Constraint::Min(10),
                 ]);
