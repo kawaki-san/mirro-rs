@@ -13,12 +13,14 @@ pub enum Action {
     Sleep,
     Focus(Widgets),
     Action,
+    SimpleExport,
+    RateExport,
 }
 
 impl Action {
     /// All available actions
     pub fn iterator() -> Iter<'static, Action> {
-        static ACTIONS: [Action; 7] = [
+        static ACTIONS: [Action; 9] = [
             Action::Quit,
             Action::Sleep,
             Action::Focus(Widgets::CountryFilter),
@@ -26,6 +28,8 @@ impl Action {
             Action::Focus(Widgets::Mirrors),
             Action::Focus(Widgets::SelectedCountries),
             Action::Action,
+            Action::SimpleExport,
+            Action::RateExport,
         ];
         ACTIONS.iter()
     }
@@ -73,6 +77,8 @@ impl Action {
                 Key::Backspace,
                 Key::Esc,
             ],
+            Action::SimpleExport => &[Key::Ctrl('r')],
+            Action::RateExport => &[Key::Ctrl('e')],
         }
     }
 }
@@ -89,6 +95,8 @@ impl Display for Action {
             Action::Focus(Widgets::Mirrors) => "Focus Mirrors",
             Action::Focus(Widgets::SelectedCountries) => "Selected Mirrors",
             Action::Action => "Action",
+            Action::SimpleExport => "Export without rate",
+            Action::RateExport => "Export with rate",
         };
         write!(f, "{}", str)
     }

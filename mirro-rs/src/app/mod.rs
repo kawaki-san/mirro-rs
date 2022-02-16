@@ -11,6 +11,7 @@ use self::{
 };
 
 pub mod actions;
+pub mod export;
 pub mod state;
 pub mod ui;
 
@@ -98,6 +99,8 @@ impl App {
             Action::Focus(Widgets::Mirrors),
             Action::Focus(Widgets::SelectedCountries),
             Action::Action,
+            Action::SimpleExport,
+            Action::RateExport,
         ]
         .into();
         self.state = AppState::initialized()
@@ -284,6 +287,12 @@ async fn key_handler(action: Action, app: &mut App, key: Key) -> AppReturn {
                     },
                 }
                 AppReturn::Continue
+            }
+            Action::SimpleExport => {
+                export::export_mirrors(app.selected_countries.clone(), false).await
+            }
+            Action::RateExport => {
+                export::export_mirrors(app.selected_countries.clone(), true).await
             }
         }
     } else {

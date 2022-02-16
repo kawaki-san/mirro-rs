@@ -116,6 +116,7 @@ impl Default for AppState {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct SelectedCountry {
     pub country: Url,
     pub search_item: String,

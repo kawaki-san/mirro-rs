@@ -5,7 +5,7 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
-    widgets::{Block, Borders, Cell, Paragraph, Row, Table},
+    widgets::{Block, Borders, Cell, Gauge, Paragraph, Row, Table},
     Frame,
 };
 use unicode_width::UnicodeWidthStr;
@@ -20,9 +20,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints(
             [
-                Constraint::Percentage(20),
-                Constraint::Percentage(70),
-                Constraint::Percentage(10),
+                Constraint::Percentage(32),
+                Constraint::Percentage(60),
+                Constraint::Percentage(8),
             ]
             .as_ref(),
         )
@@ -56,9 +56,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .margin(1)
                 .constraints(
                     [
-                        Constraint::Percentage(25),
-                        Constraint::Percentage(50),
-                        Constraint::Percentage(25),
+                        Constraint::Percentage(20),
+                        Constraint::Percentage(60),
+                        Constraint::Percentage(20),
                     ]
                     .as_ref(),
                 )
@@ -89,7 +89,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 }
             }
             let help = vec![
-                Span::raw("Press "),
+                Span::raw("Use "),
                 Span::styled("<ctrl+[", Style::default().add_modifier(Modifier::BOLD)),
                 Span::styled(
                     "key",
@@ -100,6 +100,21 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             ];
             let help = Paragraph::new(Text::from(Spans::from(help)));
             rect.render_widget(help, chunks[0]);
+            let help = vec![
+                Span::raw("Use "),
+                Span::styled("<ctrl +", Style::default().add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    " r ",
+                    Style::default()
+                        .add_modifier(Modifier::BOLD)
+                        .add_modifier(Modifier::ITALIC)
+                        .fg(Color::Yellow),
+                ),
+                Span::styled(">", Style::default().add_modifier(Modifier::BOLD)),
+                Span::raw(" to rate and export mirrors"),
+            ];
+            let help = Paragraph::new(Text::from(Spans::from(help)));
+            rect.render_widget(help, chunks[2]);
         }
         {
             let chunks = Layout::default()
@@ -119,6 +134,35 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .title(widget_title("protocols"))
                 .style(Style::default());
             rect.render_widget(input, chunks[1]);
+            {
+                let chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .margin(1)
+                    .constraints(
+                        [
+                            Constraint::Percentage(33),
+                            Constraint::Percentage(33),
+                            Constraint::Percentage(33),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(chunks[1]);
+                let https = Block::default()
+                    .borders(Borders::ALL)
+                    .title(widget_title("https"))
+                    .title_alignment(tui::layout::Alignment::Center);
+                let http = Block::default()
+                    .borders(Borders::ALL)
+                    .title(widget_title("http"))
+                    .title_alignment(tui::layout::Alignment::Center);
+                let rsync = Block::default()
+                    .borders(Borders::ALL)
+                    .title(widget_title("rsync"))
+                    .title_alignment(tui::layout::Alignment::Center);
+                rect.render_widget(https, chunks[0]);
+                rect.render_widget(http, chunks[1]);
+                rect.render_widget(rsync, chunks[2]);
+            }
         }
         {
             let header_cells = ["mirro-rs: 0.1.0"]
@@ -136,7 +180,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let datetime_utc = datetime.with_timezone(&Utc);
 
             let rows = vec![
-                Row::new(vec![table_field("os"), os]).style(Style::default().fg(Color::Blue)),
+                Row::new(vec![table_field(" os"), os]).style(Style::default().fg(Color::Blue)),
                 Row::new(vec![
                     table_field("countries"),
                     app.mirrors.countries.len().to_string(),
@@ -151,7 +195,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 .style(Style::default()),
                 Row::new(vec![
                     table_field("now"),
-                    app.clock.format("%d %h %H:%M:%S").to_string(),
+                    app.clock.format("%d %h %H:%M").to_string(),
                 ])
                 .style(Style::default().fg(Color::Cyan)),
             ];
@@ -175,7 +219,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         let header_cells = ["Country:", "Mirrors:"].iter().map(|h| {
             Cell::from(*h).style(
                 Style::default()
-                    .fg(Color::White)
+                    .fg(Color::Magenta)
                     .add_modifier(Modifier::BOLD),
             )
         });
@@ -196,13 +240,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             None
         });
         let selected_style = Style::default()
-            .fg(Color::Blue)
+            .fg(Color::Green)
             .add_modifier(Modifier::BOLD)
             .bg(Color::DarkGray)
             .add_modifier(Modifier::REVERSED);
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(65), Constraint::Percentage(35)].as_ref())
+            .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
             .split(chunks[1]);
         let t = Table::new(rows)
             .header(header)
@@ -224,7 +268,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         {
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(65), Constraint::Percentage(35)].as_ref())
+                .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
                 .split(chunks[1]);
             let rows = app.selected_countries.iter().map(|resp| {
                 let mut item_name = resp.country.country.as_str();
@@ -238,7 +282,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["marked for saving:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
-                        .fg(Color::White)
+                        .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD),
                 )
             });
@@ -284,7 +328,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["per country:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
-                        .fg(Color::White)
+                        .fg(Color::Blue)
                         .add_modifier(Modifier::BOLD),
                 )
             });
@@ -298,13 +342,34 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .border_style(Style::default()),
                 )
                 .widths(&[
-                    Constraint::Percentage(80),
+                    Constraint::Percentage(100),
                     Constraint::Length(30),
                     Constraint::Min(10),
                 ]);
             rect.render_widget(t, chunks[1]);
         }
     }
+    let gauge = Gauge::default()
+        .block(
+            Block::default()
+                .borders(if app.selected_countries.is_empty() {
+                    Borders::NONE
+                } else {
+                    Borders::ALL
+                })
+                .title(if app.selected_countries.is_empty() {
+                    ""
+                } else {
+                    "progress"
+                }),
+        )
+        .gauge_style(if app.selected_countries.is_empty() {
+            Style::default()
+        } else {
+            Style::default().fg(Color::Cyan)
+        })
+        .percent(70);
+    rect.render_widget(gauge, chunks[2]);
     rect.render_widget(block_0, chunks[0]);
 }
 
