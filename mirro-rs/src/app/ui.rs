@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use clap::crate_name;
+use tracing::error;
 use tui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -10,12 +11,15 @@ use tui::{
 };
 use unicode_width::UnicodeWidthStr;
 
-use super::{state::Widgets, App};
+use super::{
+    config::{AvailableMirrors, Colours, Countries, Info},
+    state::Widgets,
+    App,
+};
 
 pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
     let size = rect.size();
     check_size(&size);
-
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -69,7 +73,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     .title(Spans::from(vec![
                         Span::styled(
                             "f".to_string(),
-                            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                            Style::default()
+                                .fg(action_key_colour(&app.config.colours))
+                                .add_modifier(Modifier::BOLD),
                         ),
                         Span::styled(
                             "ilter".to_string(),
@@ -93,7 +99,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Span::styled("<ctrl+[", Style::default().add_modifier(Modifier::BOLD)),
                 Span::styled(
                     "key",
-                    Style::default().add_modifier(Modifier::BOLD).fg(Color::Red),
+                    Style::default()
+                        .fg(action_key_colour(&app.config.colours))
+                        .add_modifier(Modifier::BOLD),
                 ),
                 Span::styled("]>", Style::default().add_modifier(Modifier::BOLD)),
                 Span::raw(" to call a widget to focus"),
@@ -129,9 +137,18 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                     .as_ref(),
                 )
                 .split(chunks[1]);
+            let title = vec![
+                Span::styled(
+                    "p",
+                    Style::default()
+                        .fg(action_key_colour(&app.config.colours))
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled("rotocols", Style::default().add_modifier(Modifier::BOLD)),
+            ];
             let input = Block::default()
                 .borders(Borders::ALL)
-                .title(widget_title("protocols"))
+                .title(title)
                 .style(Style::default());
             rect.render_widget(input, chunks[1]);
             {
@@ -147,17 +164,44 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .as_ref(),
                     )
                     .split(chunks[1]);
+                let title = vec![
+                    Span::styled(
+                        "h",
+                        Style::default()
+                            .fg(action_key_colour(&app.config.colours))
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::styled("ttps", Style::default().add_modifier(Modifier::BOLD)),
+                ];
                 let https = Block::default()
                     .borders(Borders::ALL)
-                    .title(widget_title("https"))
+                    .title(title)
                     .title_alignment(tui::layout::Alignment::Center);
+                let title = vec![
+                    Span::styled(
+                        "h",
+                        Style::default()
+                            .fg(action_key_colour(&app.config.colours))
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::styled("ttp", Style::default().add_modifier(Modifier::BOLD)),
+                ];
                 let http = Block::default()
                     .borders(Borders::ALL)
-                    .title(widget_title("http"))
+                    .title(title)
                     .title_alignment(tui::layout::Alignment::Center);
+                let title = vec![
+                    Span::styled(
+                        "r",
+                        Style::default()
+                            .fg(action_key_colour(&app.config.colours))
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                    Span::styled("sync", Style::default().add_modifier(Modifier::BOLD)),
+                ];
                 let rsync = Block::default()
                     .borders(Borders::ALL)
-                    .title(widget_title("rsync"))
+                    .title(title)
                     .title_alignment(tui::layout::Alignment::Center);
                 rect.render_widget(https, chunks[0]);
                 rect.render_widget(http, chunks[1]);
@@ -168,9 +212,15 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["mirro-rs: 0.1.0"]
                 .iter()
                 .map(|h| Cell::from(*h).style(Style::default()));
-            let header = Row::new(header_cells)
-                .height(1)
-                .style(Style::default().fg(Color::Red));
+            let header = Row::new(header_cells).height(1).style(Style::default().fg(
+                match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => app_name(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                },
+            ));
             let mut count = 0;
             app.mirrors.countries.iter().for_each(|f| {
                 count += f.mirrors.len();
@@ -180,24 +230,91 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let datetime_utc = datetime.with_timezone(&Utc);
 
             let rows = vec![
-                Row::new(vec![table_field(" os"), os]).style(Style::default().fg(Color::Blue)),
                 Row::new(vec![
-                    table_field("countries"),
+                    (match &app.config.icons {
+                        Some(icons) => match &icons.os {
+                            Some(icon) => format!(" {} os", icon),
+                            None => String::from("os"),
+                        },
+                        None => String::from("os"),
+                    }),
+                    os,
+                ])
+                .style(Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => os_header(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })),
+                Row::new(vec![
+                    (match &app.config.icons {
+                        Some(icons) => match &icons.countries {
+                            Some(icon) => format!(" {} countries", icon),
+                            None => String::from("countries"),
+                        },
+                        None => String::from("countries"),
+                    }),
                     app.mirrors.countries.len().to_string(),
                 ])
-                .style(Style::default().fg(Color::Yellow)),
-                Row::new(vec![table_field("mirrors"), count.to_string()])
-                    .style(Style::default().fg(Color::Magenta)),
+                .style(Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => countries_header(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })),
                 Row::new(vec![
-                    table_field("last checked"),
+                    (match &app.config.icons {
+                        Some(icons) => match &icons.mirrors {
+                            Some(icon) => format!(" {} mirrors", icon),
+                            None => String::from("mirrors"),
+                        },
+                        None => String::from("mirrors"),
+                    }),
+                    count.to_string(),
+                ])
+                .style(Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => mirrors_header(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })),
+                Row::new(vec![
+                    (match &app.config.icons {
+                        Some(icons) => match &icons.last_checked {
+                            Some(icon) => format!(" {} last checked", icon),
+                            None => String::from("last checked"),
+                        },
+                        None => String::from("last checked"),
+                    }),
                     datetime_utc.format("%d %h %H:%M").to_string(),
                 ])
-                .style(Style::default()),
+                .style(Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => last_checked_header(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })),
                 Row::new(vec![
-                    table_field("now"),
+                    (match &app.config.icons {
+                        Some(icons) => match &icons.now {
+                            Some(icon) => format!(" {} now", icon),
+                            None => String::from("now"),
+                        },
+                        None => String::from("now"),
+                    }),
                     app.clock.format("%d %h %H:%M").to_string(),
                 ])
-                .style(Style::default().fg(Color::Cyan)),
+                .style(Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.info {
+                        Some(available) => now_header(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })),
             ];
             let t = Table::new(rows)
                 .header(header)
@@ -219,7 +336,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
         let header_cells = ["Country:", "Mirrors:"].iter().map(|h| {
             Cell::from(*h).style(
                 Style::default()
-                    .fg(Color::Magenta)
+                    .fg(match &app.config.colours {
+                        Some(colors) => match &colors.available_mirrors {
+                            Some(available) => heading_colour(available),
+                            None => Color::White,
+                        },
+                        None => Color::White,
+                    })
                     .add_modifier(Modifier::BOLD),
             )
         });
@@ -248,11 +371,23 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
             .split(chunks[1]);
+        let title = vec![
+            Span::styled(
+                "a",
+                Style::default()
+                    .fg(action_key_colour(&app.config.colours))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "vailable mirrors",
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
+        ];
         let t = Table::new(rows)
             .header(header)
             .block(
                 Block::default()
-                    .title(widget_title("available mirrors"))
+                    .title(title)
                     .borders(Borders::ALL)
                     .border_style(Style::default()),
             )
@@ -282,7 +417,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["marked for saving:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
-                        .fg(Color::Cyan)
+                        .fg(match &app.config.colours {
+                            Some(colors) => match &colors.countries {
+                                Some(available) => heading_colour_countries(available),
+                                None => Color::White,
+                            },
+                            None => Color::White,
+                        })
                         .add_modifier(Modifier::BOLD),
                 )
             });
@@ -298,7 +439,9 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                             ),
                             Span::styled(
                                 "o".to_string(),
-                                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                                Style::default()
+                                    .fg(action_key_colour(&app.config.colours))
+                                    .add_modifier(Modifier::BOLD),
                             ),
                             Span::styled(
                                 "untries".to_string(),
@@ -328,7 +471,13 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             let header_cells = ["per country:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
-                        .fg(Color::Blue)
+                        .fg(match &app.config.colours {
+                            Some(colors) => match &colors.countries {
+                                Some(available) => heading_colour_countries(available),
+                                None => Color::Blue,
+                            },
+                            None => Color::Blue,
+                        })
                         .add_modifier(Modifier::BOLD),
                 )
             });
@@ -397,19 +546,145 @@ fn check_size(size: &tui::layout::Rect) {
     }
 }
 
-fn table_field(text: &str) -> String {
-    format!(" {text}")
+fn action_key_colour(colours: &Option<Colours>) -> tui::style::Color {
+    match &colours {
+        Some(val) => match &val.action_key {
+            Some(color) => {
+                if let Some((red, green, blue)) = rgb_from_hex(color.to_string()) {
+                    Color::Rgb(red, green, blue)
+                } else {
+                    Color::White
+                }
+            }
+            None => Color::White,
+        },
+        None => Color::White,
+    }
+}
+fn rgb_from_hex(val: String) -> Option<(u8, u8, u8)> {
+    if val.chars().into_iter().count() == 6 {
+        match u8::from_str_radix(&val[0..2], 16) {
+            Ok(red) => match u8::from_str_radix(&val[2..4], 16) {
+                Ok(green) => match u8::from_str_radix(&val[4..6], 16) {
+                    Ok(blue) => Some((red, green, blue)),
+                    Err(e) => {
+                        error!("{e}");
+                        None
+                    }
+                },
+                Err(e) => {
+                    error!("{e}");
+                    None
+                }
+            },
+            Err(e) => {
+                error!("{e}");
+                None
+            }
+        }
+    } else {
+        Some((255, 255, 255))
+    }
 }
 
-fn widget_title(title: &str) -> Spans {
-    Spans::from(vec![
-        Span::styled(
-            title.get(0..1).unwrap().to_string(),
-            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-        ),
-        Span::styled(
-            title.get(1..title.len()).unwrap().to_string(),
-            Style::default().add_modifier(Modifier::BOLD),
-        ),
-    ])
+fn heading_colour(colours: &AvailableMirrors) -> tui::style::Color {
+    match &colours.heading {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+
+fn heading_colour_countries(colours: &Countries) -> tui::style::Color {
+    match &colours.heading {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+
+fn os_header(colours: &Info) -> tui::style::Color {
+    match &colours.os {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+fn countries_header(colours: &Info) -> tui::style::Color {
+    match &colours.countries {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+fn mirrors_header(colours: &Info) -> tui::style::Color {
+    match &colours.mirrors {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+
+fn last_checked_header(colours: &Info) -> tui::style::Color {
+    match &colours.last_checked {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+
+fn now_header(colours: &Info) -> tui::style::Color {
+    match &colours.now {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
+
+fn app_name(colours: &Info) -> tui::style::Color {
+    match &colours.app {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
 }
