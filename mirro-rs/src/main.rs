@@ -1,4 +1,3 @@
-use chrono::Utc;
 use mirro_rs::{app::App, io::handler::IoAsyncHandler, start_ui};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
@@ -38,7 +37,7 @@ async fn main() -> mirro_rs::Result<()> {
     tokio::spawn(async move {
         loop {
             let mut app = app_clock.lock().await;
-            let dt = Utc::now();
+            let dt = chrono::offset::Local::now();
             app.update_clock(dt);
             tokio::time::sleep(Duration::from_micros(100)).await;
         }
