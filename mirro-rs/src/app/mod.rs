@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 use linux_mirrors::archlinux::internal::{ArchMirrors, Url};
 use tracing::{error, trace};
 use tui::widgets::TableState;
@@ -36,7 +36,7 @@ pub struct App {
     state: AppState,
     mirrors: ArchMirrors,
     country_filter: String,
-    clock: DateTime<Utc>,
+    clock: DateTime<Local>,
     table: TableState,
     selected_countries: Vec<SelectedCountry>,
     selected_table: TableState,
@@ -56,7 +56,7 @@ impl App {
             state,
             mirrors: ArchMirrors::default(),
             country_filter: String::default(),
-            clock: Utc::now(),
+            clock: Local::now(),
             table: TableState::default(),
             selected_table: TableState::default(),
             selected_countries: vec![],
@@ -114,7 +114,7 @@ impl App {
         self.state.incr_sleep();
     }
 
-    pub fn update_clock(&mut self, clock: DateTime<Utc>) {
+    pub fn update_clock(&mut self, clock: DateTime<Local>) {
         self.clock = clock;
     }
 
