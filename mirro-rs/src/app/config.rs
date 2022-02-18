@@ -24,7 +24,10 @@ pub struct Colours {
 pub struct AvailableMirrors {
     pub heading: Option<String>,
     pub border: Option<String>,
-    pub highlight: Option<String>,
+    #[serde(rename = "highlight-fg")]
+    pub highlight_fg: Option<String>,
+    #[serde(rename = "highlight-bg")]
+    pub highlight_bg: Option<String>,
     pub reverse: Option<bool>,
 }
 
@@ -33,7 +36,10 @@ pub struct AvailableMirrors {
 pub struct Countries {
     pub heading: Option<String>,
     pub border: Option<String>,
-    pub highlight: Option<String>,
+    #[serde(rename = "highlight-fg")]
+    pub highlight_fg: Option<String>,
+    #[serde(rename = "highlight-bg")]
+    pub highlight_bg: Option<String>,
     pub reverse: Option<bool>,
 }
 
@@ -66,4 +72,8 @@ pub struct Icons {
     #[serde(rename = "last_checked")]
     pub last_checked: Option<String>,
     pub now: Option<String>,
+    #[serde(rename = "highlight-symbol-countries")]
+    pub highlight_symbol_countries: Option<char>,
+    #[serde(rename = "highlight-symbol-mirrors")]
+    pub highlight_symbol_mirrors: Option<char>,
 }

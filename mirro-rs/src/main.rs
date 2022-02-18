@@ -6,6 +6,7 @@ use mirro_rs::{
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use tracing::error;
+use xdg::BaseDirectories;
 
 #[tokio::main]
 async fn main() -> mirro_rs::Result<()> {
@@ -105,8 +106,20 @@ fn initialise_app() -> (tracing_appender::non_blocking::WorkerGuard, MirrorsConf
 }
 
 fn try_default() -> MirrorsConfig {
-    let defaults = include_str!("../../mirro-rs.toml");
-    toml::from_str(defaults).unwrap()
+    let defaults = match BaseDirectories::new() {
+        Ok(dir) => {
+            let fs = dir.get_config_file("mirro-rs.toml");
+            match std::fs::read_to_string(fs) {
+                Ok(f) => f,
+                Err(e) => {
+                    error!("{}", e);
+                    include_str!("../../mirro-rs.toml").to_string()
+                }
+            }
+        }
+        Err(_) => include_str!("../../mirro-rs.toml").to_string(),
+    };
+    toml::from_str(&defaults).unwrap()
 }
 fn setup_logger(
     log_level: (tracing::Level, bool),

@@ -233,7 +233,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(vec![
                     (match &app.config.icons {
                         Some(icons) => match &icons.os {
-                            Some(icon) => format!(" {} os", icon),
+                            Some(icon) => format!("{} os", icon),
                             None => String::from("os"),
                         },
                         None => String::from("os"),
@@ -250,7 +250,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(vec![
                     (match &app.config.icons {
                         Some(icons) => match &icons.countries {
-                            Some(icon) => format!(" {} countries", icon),
+                            Some(icon) => format!("{} countries", icon),
                             None => String::from("countries"),
                         },
                         None => String::from("countries"),
@@ -267,7 +267,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(vec![
                     (match &app.config.icons {
                         Some(icons) => match &icons.mirrors {
-                            Some(icon) => format!(" {} mirrors", icon),
+                            Some(icon) => format!("{} mirrors", icon),
                             None => String::from("mirrors"),
                         },
                         None => String::from("mirrors"),
@@ -284,7 +284,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(vec![
                     (match &app.config.icons {
                         Some(icons) => match &icons.last_checked {
-                            Some(icon) => format!(" {} last checked", icon),
+                            Some(icon) => format!("{} last checked", icon),
                             None => String::from("last checked"),
                         },
                         None => String::from("last checked"),
@@ -301,7 +301,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(vec![
                     (match &app.config.icons {
                         Some(icons) => match &icons.now {
-                            Some(icon) => format!(" {} now", icon),
+                            Some(icon) => format!("{} now", icon),
                             None => String::from("now"),
                         },
                         None => String::from("now"),
@@ -362,11 +362,75 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
             }
             None
         });
+        let (fg, bg, reversed): (String, String, bool) = match &app.config.colours {
+            Some(cols) => match &cols.available_mirrors {
+                Some(cols) => match &cols.highlight_fg {
+                    Some(fg) => match &cols.highlight_bg {
+                        Some(bg) => match &cols.reverse {
+                            Some(reversed) => (fg.to_string(), bg.to_string(), *reversed),
+                            None => (fg.to_string(), bg.to_string(), false),
+                        },
+                        None => match &cols.reverse {
+                            Some(vals) => (fg.to_string(), "d3d3d3".to_owned(), *vals),
+                            None => (fg.to_string(), "d3d3d3".to_owned(), false),
+                        },
+                    },
+                    None => {
+                        let fg = "d3d3d3";
+                        match &cols.highlight_bg {
+                            Some(bg) => match &cols.reverse {
+                                Some(reversed) => (fg.to_string(), bg.to_string(), *reversed),
+                                None => (fg.to_string(), bg.to_string(), false),
+                            },
+                            None => match &cols.reverse {
+                                Some(vals) => (fg.to_string(), "d3d3d3".to_owned(), *vals),
+                                None => (fg.to_string(), "d3d3d3".to_owned(), false),
+                            },
+                        }
+                    }
+                },
+                None => ("d3d3d3".to_owned(), "d3d3d3".to_owned(), false),
+            },
+            None => ("d3d3d3".to_owned(), "d3d3d3".to_owned(), false),
+        };
+        let bg = rgb_from_hex(bg);
+        let fg = rgb_from_hex(fg);
         let selected_style = Style::default()
-            .fg(Color::Green)
-            .add_modifier(Modifier::BOLD)
-            .bg(Color::DarkGray)
-            .add_modifier(Modifier::REVERSED);
+            .fg(match fg {
+                Some(colors) => Color::Rgb(colors.0, colors.1, colors.2),
+                None => Color::Gray,
+            })
+            .bg(match bg {
+                Some(colors) => Color::Rgb(colors.0, colors.1, colors.2),
+                None => Color::Gray,
+            })
+            .add_modifier(Modifier::BOLD);
+        let symbol = match &app.config.icons {
+            Some(val) => match val.highlight_symbol_mirrors {
+                Some(char) => char.to_string(),
+                None => String::from(" "),
+            },
+            None => String::from(" "),
+        };
+        let style = match reversed {
+            true => Style::default()
+                .fg(match &app.config.colours {
+                    Some(colors) => match &colors.available_mirrors {
+                        Some(available) => border_colour_mirrors(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                })
+                .add_modifier(Modifier::REVERSED),
+            false => Style::default().fg(match &app.config.colours {
+                Some(colors) => match &colors.available_mirrors {
+                    Some(available) => border_colour_mirrors(available),
+                    None => Color::White,
+                },
+                None => Color::White,
+            }),
+        };
+
         let chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(60), Constraint::Percentage(40)].as_ref())
@@ -389,10 +453,10 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Block::default()
                     .title(title)
                     .borders(Borders::ALL)
-                    .border_style(Style::default()),
+                    .border_style(style),
             )
             .highlight_style(selected_style)
-            .highlight_symbol(" ")
+            .highlight_symbol(&symbol)
             .widths(&[
                 Constraint::Percentage(50),
                 Constraint::Length(30),
@@ -414,6 +478,74 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                 Row::new(row.into_iter())
             });
 
+            let (fg, bg, reversed): (String, String, bool) = match &app.config.colours {
+                Some(cols) => match &cols.countries {
+                    Some(cols) => match &cols.highlight_fg {
+                        Some(fg) => match &cols.highlight_bg {
+                            Some(bg) => match &cols.reverse {
+                                Some(reversed) => (fg.to_string(), bg.to_string(), *reversed),
+                                None => (fg.to_string(), bg.to_string(), false),
+                            },
+                            None => match &cols.reverse {
+                                Some(vals) => (fg.to_string(), "d3d3d3".to_owned(), *vals),
+                                None => (fg.to_string(), "d3d3d3".to_owned(), false),
+                            },
+                        },
+                        None => {
+                            let fg = "d3d3d3";
+                            match &cols.highlight_bg {
+                                Some(bg) => match &cols.reverse {
+                                    Some(reversed) => (fg.to_string(), bg.to_string(), *reversed),
+                                    None => (fg.to_string(), bg.to_string(), false),
+                                },
+                                None => match &cols.reverse {
+                                    Some(vals) => (fg.to_string(), "d3d3d3".to_owned(), *vals),
+                                    None => (fg.to_string(), "d3d3d3".to_owned(), false),
+                                },
+                            }
+                        }
+                    },
+                    None => ("d3d3d3".to_owned(), "d3d3d3".to_owned(), false),
+                },
+                None => ("d3d3d3".to_owned(), "d3d3d3".to_owned(), false),
+            };
+            let bg = rgb_from_hex(bg);
+            let fg = rgb_from_hex(fg);
+            let selected_style = Style::default()
+                .fg(match fg {
+                    Some(colors) => Color::Rgb(colors.0, colors.1, colors.2),
+                    None => Color::Gray,
+                })
+                .bg(match bg {
+                    Some(colors) => Color::Rgb(colors.0, colors.1, colors.2),
+                    None => Color::Gray,
+                })
+                .add_modifier(Modifier::BOLD);
+            let symbol = match &app.config.icons {
+                Some(val) => match val.highlight_symbol_countries {
+                    Some(char) => char.to_string(),
+                    None => String::from(" "),
+                },
+                None => String::from(" "),
+            };
+            let style = match reversed {
+                true => Style::default()
+                    .fg(match &app.config.colours {
+                        Some(colors) => match &colors.countries {
+                            Some(available) => border_colour_countries(available),
+                            None => Color::White,
+                        },
+                        None => Color::White,
+                    })
+                    .add_modifier(Modifier::REVERSED),
+                false => Style::default().fg(match &app.config.colours {
+                    Some(colors) => match &colors.countries {
+                        Some(available) => border_colour_countries(available),
+                        None => Color::White,
+                    },
+                    None => Color::White,
+                }),
+            };
             let header_cells = ["marked for saving:"].iter().map(|h| {
                 Cell::from(*h).style(
                     Style::default()
@@ -427,6 +559,7 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                         .add_modifier(Modifier::BOLD),
                 )
             });
+
             let header = Row::new(header_cells).height(1);
             let t = Table::new(rows)
                 .header(header)
@@ -449,10 +582,10 @@ pub fn draw(rect: &mut Frame<impl Backend>, app: &mut App) {
                             ),
                         ]))
                         .borders(Borders::ALL)
-                        .border_style(Style::default()),
+                        .border_style(style),
                 )
-                .highlight_symbol(" ")
-                .highlight_style(selected_style.patch(Style::default().fg(Color::Yellow)))
+                .highlight_symbol(&symbol)
+                .highlight_style(selected_style)
                 .widths(&[
                     Constraint::Percentage(80),
                     Constraint::Length(30),
@@ -599,7 +732,31 @@ fn heading_colour(colours: &AvailableMirrors) -> tui::style::Color {
         None => Color::Blue,
     }
 }
+fn border_colour_mirrors(colours: &AvailableMirrors) -> tui::style::Color {
+    match &colours.border {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
 
+fn border_colour_countries(colours: &Countries) -> tui::style::Color {
+    match &colours.border {
+        Some(col) => {
+            if let Some((red, green, blue)) = rgb_from_hex(col.to_string()) {
+                Color::Rgb(red, green, blue)
+            } else {
+                Color::Blue
+            }
+        }
+        None => Color::Blue,
+    }
+}
 fn heading_colour_countries(colours: &Countries) -> tui::style::Color {
     match &colours.heading {
         Some(col) => {

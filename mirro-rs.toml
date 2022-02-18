@@ -4,13 +4,15 @@ action_key = ""
 [colours.available-mirrors]
 heading = ""
 border = ""
-highlight = ""
+highlight-bg = ""
+highlight-fg = ""
 reverse = false
 
 [colours.countries]
 heading = ""
 border = ""
-highlight = ""
+highlight-bg = ""
+highlight-fg = ""
 reverse = false
 
 [colours.mirrors]
@@ -32,3 +34,5 @@ countries = ""
 mirrors = ""
 last_checked = ""
 now = ""
+highlight-symbol-mirrors = "D"
+highlight-symbol-countries = "C"
