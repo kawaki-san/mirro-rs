@@ -1,0 +1,38 @@
+[colours]
+action_key = ""
+
+[colours.available-mirrors]
+heading = ""
+border = ""
+highlight-bg = ""
+highlight-fg = ""
+reverse = false
+
+[colours.countries]
+heading = ""
+border = ""
+highlight-bg = ""
+highlight-fg = ""
+reverse = false
+
+[colours.mirrors]
+heading = ""
+border = ""
+reverse = false
+
+[colours.info]
+app = ""
+os = ""
+countries = ""
+mirrors = ""
+last_checked = ""
+now = ""
+
+[icons]
+os = ""
+countries = ""
+mirrors = ""
+last_checked = ""
+now = ""
+highlight-symbol-mirrors = "D"
+highlight-symbol-countries = "C"

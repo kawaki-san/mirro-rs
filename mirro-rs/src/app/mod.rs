@@ -7,10 +7,12 @@ use crate::{inputs::key::Key, io::IoEvent};
 
 use self::{
     actions::{Action, Actions},
+    config::MirrorsConfig,
     state::{AppState, SelectedCountry, Widgets},
 };
 
 pub mod actions;
+pub mod config;
 pub mod export;
 pub mod state;
 pub mod ui;
@@ -41,10 +43,11 @@ pub struct App {
     selected_countries: Vec<SelectedCountry>,
     selected_table: TableState,
     focused_country: Url,
+    config: MirrorsConfig,
 }
 
 impl App {
-    pub fn new(io_tx: tokio::sync::mpsc::Sender<IoEvent>) -> Self {
+    pub fn new(io_tx: tokio::sync::mpsc::Sender<IoEvent>, config: MirrorsConfig) -> Self {
         let actions = vec![Action::Quit].into();
         let is_loading = false;
         let state = AppState::default();
@@ -61,6 +64,7 @@ impl App {
             selected_table: TableState::default(),
             selected_countries: vec![],
             focused_country: Url::default(),
+            config,
         }
     }
 
