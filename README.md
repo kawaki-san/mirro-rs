@@ -7,8 +7,9 @@ Yes, more bloat for Linux. It's memory safe though :)
 ![UI](/../screenshots/assets/window.png?raw=true "UI")
 
 ## Todo
-[x] Filter mirrorlist by country
-[ ] Filter mirrorlist by protocol
-[x] Save mirrorlist
-[ ] Rate and save mirrorlist
-[ ] CLI args(?)
+
+- [x] Filter mirrorlist by country
+- [x] Save mirrorlist
+- [ ] Create checbox widget - Filter mirrorlist by protocol
+- [ ] Rate and Save mirrorlist
+- [ ] Commandline interface
